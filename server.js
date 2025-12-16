@@ -10,6 +10,11 @@ const app = express();
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
+/* ✅ ROOT ROUTE (VERY IMPORTANT) */
+app.get("/", (req, res) => {
+  res.send("GoldenBangle Chatbot Backend is running 🚀");
+});
+
 app.use("/api/chat", chatRoutes);
 
 app.get("/health", (req, res) => {
