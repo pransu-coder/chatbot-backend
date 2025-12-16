@@ -1,8 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
   <title>GoldenBangle Support</title>
+
   <style>
+    * { box-sizing: border-box; }
+
     body {
       font-family: Arial, sans-serif;
       background: #fff9e6;
@@ -12,8 +16,9 @@
       height: 100vh;
       margin: 0;
     }
+
     .chat {
-      width: 360px;
+      width: 380px;
       height: 560px;
       background: #fff;
       border-radius: 16px;
@@ -22,6 +27,7 @@
       flex-direction: column;
       overflow: hidden;
     }
+
     .header {
       background: linear-gradient(135deg,#c9a23f,#9f7c19);
       color:#fff;
@@ -29,45 +35,55 @@
       text-align:center;
       font-weight:600;
     }
+
     #messages {
       flex:1;
       padding:12px;
       overflow-y:auto;
       background:#fafafa;
     }
+
     .msg {
       margin-bottom:10px;
       max-width:75%;
       padding:10px 14px;
       border-radius:14px;
       font-size:14px;
+      word-wrap: break-word;
     }
+
     .user {
       background:#d4af37;
       color:#fff;
       margin-left:auto;
     }
+
     .bot {
       background:#eee;
       color:#333;
     }
+
     .typing {
       font-size:12px;
       color:#777;
       margin-bottom:8px;
+      font-style: italic;
     }
+
     .input {
       display:flex;
       gap:6px;
       padding:10px;
       border-top:1px solid #ddd;
     }
+
     input[type="text"] {
       flex:1;
       padding:8px 12px;
       border-radius:18px;
       border:1px solid #ccc;
     }
+
     button {
       padding:8px 14px;
       border:none;
@@ -77,13 +93,14 @@
       font-weight:600;
       cursor:pointer;
     }
+
     .attach {
-      background:#fff;
-      color:#9f7c19;
-      border:1px solid #d6c27a;
       width:36px;
       height:36px;
       border-radius:50%;
+      border:1px solid #d6c27a;
+      background:#fff;
+      color:#9f7c19;
       font-size:18px;
       cursor:pointer;
     }
@@ -105,7 +122,9 @@
 </div>
 
 <script>
-  const API_URL = "https://chatbot-api.onrender.com/api/chat";
+  // ✅ YOUR REAL RENDER API
+  const API_URL = "https://chatbot-backend-htzb.onrender.com/api/chat";
+
   const messages = document.getElementById("messages");
   const input = document.getElementById("input");
   const imageInput = document.getElementById("imageInput");
@@ -113,12 +132,7 @@
 
   let typingEl = null;
 
-  function add(text, cls) {
-    removeTyping();
-    const div = document.createElement("div");
-    div.className = "msg " + cls;
-    div.textContent = text;
-    messages.appendChild(div);
+  function scrollBottom() {
     messages.scrollTop = messages.scrollHeight;
   }
 
@@ -128,7 +142,7 @@
     typingEl.className = "typing";
     typingEl.textContent = "GoldenBangle is typing...";
     messages.appendChild(typingEl);
-    messages.scrollTop = messages.scrollHeight;
+    scrollBottom();
   }
 
   function removeTyping() {
@@ -138,26 +152,44 @@
     }
   }
 
+  function addMessage(text, cls) {
+    const div = document.createElement("div");
+    div.className = "msg " + cls;
+    div.innerText = text;
+    messages.appendChild(div);
+    scrollBottom();
+  }
+
   async function send() {
     const text = input.value.trim();
     if (!text) return;
 
-    add(text, "user");
+    addMessage(text, "user");
     input.value = "";
     showTyping();
 
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({ message: text, userId })
       });
 
-      const data = await res.json();
-      add(data.reply || "Support unavailable", "bot");
+      clearTimeout(timeout);
 
-    } catch {
-      add("Server not responding. Please try again.", "bot");
+      if (!res.ok) throw new Error("API error");
+
+      const data = await res.json();
+      addMessage(data.reply || "Support unavailable", "bot");
+
+    } catch (err) {
+      addMessage("Server not responding. Please try again.", "bot");
+    } finally {
+      removeTyping();   // 🔥 IMPORTANT FIX
     }
   }
 
@@ -171,7 +203,7 @@
       div.className = "msg user";
       div.innerHTML = `<img src="${reader.result}" style="max-width:150px;border-radius:10px">`;
       messages.appendChild(div);
-      messages.scrollTop = messages.scrollHeight;
+      scrollBottom();
     };
     reader.readAsDataURL(file);
 
@@ -184,11 +216,15 @@
         body: JSON.stringify({ userId, imageUploaded: true })
       });
 
+      if (!res.ok) throw new Error();
+
       const data = await res.json();
-      add(data.reply || "Image received.", "bot");
+      addMessage(data.reply || "Image received.", "bot");
 
     } catch {
-      add("Image upload failed.", "bot");
+      addMessage("Image upload failed.", "bot");
+    } finally {
+      removeTyping();   // 🔥 IMPORTANT FIX
     }
   });
 
