@@ -3,39 +3,66 @@ import express from "express";
 const router = express.Router();
 const sessions = new Map();
 
-/* ===== SIMPLE FIXED REPLIES ===== */
-const replies = {
-  greet: "✨ Welcome to GoldenBangle Support. How may I assist you today?",
-  help:
-    "I can help you with:\n" +
-    "• Gold & Silver bangles\n" +
-    "• Repair or replacement\n" +
-    "• Bangle care & polishing\n\n" +
-    "Please tell me your concern.",
-  price:
-    "💰 Bangle prices depend on gold/silver rate, weight and design.\n" +
-    "For exact pricing, please visit our showroom or website.",
-  care:
-    "💎 Bangle Care Tips:\n" +
-    "• Avoid water & chemicals\n" +
-    "• Store in soft cloth\n" +
-    "• Clean with dry cloth",
-  polish:
-    "✨ We provide professional polishing services for gold and silver bangles.",
-  thanks:
-    "🙏 Thank you for choosing GoldenBangle. I’m happy to assist you anytime."
+/* ================= TRAINING DATA ================= */
+
+const TRAINING = {
+  GREET: {
+    match: /(hi|hello|hey|namaste)/i,
+    reply:
+      "✨ Welcome to GoldenBangle Support.\n" +
+      "How may I assist you today?"
+  },
+
+  PRICE: {
+    match: /(price|cost|rate|charges)/i,
+    reply:
+      "💰 *Pricing Information*\n" +
+      "Bangle prices depend on:\n" +
+      "• Gold/Silver rate\n" +
+      "• Weight & design\n" +
+      "• Making charges\n\n" +
+      "For exact pricing, please visit our showroom or website."
+  },
+
+  CARE: {
+    match: /(care|clean|maintain)/i,
+    reply:
+      "💎 *Bangle Care Tips*\n" +
+      "• Avoid water & chemicals\n" +
+      "• Store in soft cloth pouch\n" +
+      "• Clean gently with dry cloth"
+  },
+
+  POLISH: {
+    match: /(polish|shine|dull)/i,
+    reply:
+      "✨ *Polishing Service*\n" +
+      "We provide professional polishing for gold & silver bangles."
+  },
+
+  DELIVERY: {
+    match: /(delivery|shipping|courier)/i,
+    reply:
+      "🚚 *Delivery Information*\n" +
+      "Orders are delivered within 5–7 working days."
+  },
+
+  THANKS: {
+    match: /(thank|thanks)/i,
+    reply:
+      "🙏 Thank you for choosing GoldenBangle.\n" +
+      "I’m here if you need further assistance."
+  },
+
+  NOT_ALLOWED: {
+    match: /(mobile|laptop|tv|charger|electronics)/i,
+    reply:
+      "❌ I can assist only with gold or silver bangles.\n" +
+      "Please let me know your jewellery-related query."
+  }
 };
 
-/* ===== KEYWORD CHECKS ===== */
-const is = {
-  greet: m => /hi|hello|hey|namaste/i.test(m),
-  help: m => /help|support/i.test(m),
-  price: m => /price|cost|rate/i.test(m),
-  care: m => /care|clean|maintain/i.test(m),
-  polish: m => /polish|shine/i.test(m),
-  issue: m => /broken|damage|issue|problem/i.test(m),
-  thanks: m => /thank/i.test(m),
-};
+/* ================= COMPLAINT FLOW ================= */
 
 router.post("/", (req, res) => {
   const { message = "", userId, imageUploaded } = req.body || {};
@@ -45,24 +72,25 @@ router.post("/", (req, res) => {
 
   const msg = message.toLowerCase();
 
-  /* ===== SESSION INIT ===== */
+  /* INIT SESSION */
   if (!sessions.has(userId)) {
     sessions.set(userId, { step: 0, data: {} });
-    return res.json({ reply: replies.greet });
+    return res.json({ reply: TRAINING.GREET.reply });
   }
 
   const session = sessions.get(userId);
 
-  /* ===== SIMPLE GENERAL REPLIES ===== */
-  if (is.greet(msg)) return res.json({ reply: replies.greet });
-  if (is.help(msg)) return res.json({ reply: replies.help });
-  if (is.price(msg)) return res.json({ reply: replies.price });
-  if (is.care(msg)) return res.json({ reply: replies.care });
-  if (is.polish(msg)) return res.json({ reply: replies.polish });
-  if (is.thanks(msg)) return res.json({ reply: replies.thanks });
+  /* ================= TRAINED INTENTS ================= */
 
-  /* ===== COMPLAINT FLOW ===== */
-  if (session.step === 0 && is.issue(msg)) {
+  for (const key in TRAINING) {
+    if (TRAINING[key].match.test(msg)) {
+      return res.json({ reply: TRAINING[key].reply });
+    }
+  }
+
+  /* ================= COMPLAINT FLOW ================= */
+
+  if (session.step === 0 && /(broken|damage|issue|problem)/i.test(msg)) {
     session.step = 1;
     return res.json({
       reply: "🛠 Please describe the issue you are facing with your bangle."
@@ -105,16 +133,21 @@ router.post("/", (req, res) => {
 
     return res.json({
       reply:
-        "✅ Complaint registered successfully.\n\n" +
+        "✅ *Complaint Registered Successfully*\n\n" +
         `🆔 Complaint ID: ${id}\n\n` +
-        "Our team will contact you shortly."
+        "Our jewellery expert team will contact you shortly."
     });
   }
 
-  /* ===== FALLBACK ===== */
+  /* ================= SAFE FALLBACK ================= */
+
   return res.json({
     reply:
-      "I can help you with gold or silver bangles, repair, replacement or care."
+      "💬 I can help you with:\n" +
+      "• Gold & silver bangles\n" +
+      "• Repair or replacement\n" +
+      "• Care & polishing\n\n" +
+      "Please tell me your concern."
   });
 });
 
