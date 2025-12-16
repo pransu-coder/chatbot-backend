@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>GoldenBangle Support</title>
 
 <style>
@@ -9,36 +10,46 @@
 
 body {
   margin: 0;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #fdf6e3;
   font-family: "Segoe UI", sans-serif;
+  background: #fdf6e3;
 }
 
+/* ===== APP WRAPPER ===== */
 .chat-app {
-  width: 380px;
-  height: 580px;
+  width: 100%;
+  height: 100vh;
   background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 20px 45px rgba(0,0,0,.18);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
-/* HEADER */
+/* Desktop view */
+@media (min-width: 768px) {
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .chat-app {
+    width: 400px;
+    height: 600px;
+    border-radius: 18px;
+    box-shadow: 0 20px 45px rgba(0,0,0,.18);
+    overflow: hidden;
+  }
+}
+
+/* ===== HEADER ===== */
 .header {
   background: linear-gradient(135deg,#c9a23f,#9f7c19);
   color: #fff;
   padding: 14px;
   text-align: center;
   font-weight: 600;
-  letter-spacing: .4px;
+  font-size: 16px;
 }
 
-/* MESSAGES */
+/* ===== MESSAGES ===== */
 .messages {
   flex: 1;
   padding: 14px;
@@ -46,7 +57,7 @@ body {
   background: #fafafa;
 }
 
-/* CHAT ROW */
+/* ===== ROW ===== */
 .row {
   display: flex;
   margin-bottom: 12px;
@@ -57,18 +68,19 @@ body {
   justify-content: flex-end;
 }
 
-/* AVATAR */
+/* ===== AVATAR ===== */
 .avatar {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: linear-gradient(135deg,#c9a23f,#9f7c19);
   color: #fff;
-  font-size: 13px;
+  font-size: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 8px;
+  flex-shrink: 0;
 }
 
 .row.user .avatar {
@@ -77,31 +89,33 @@ body {
   margin-right: 0;
 }
 
-/* BUBBLE */
+/* ===== BUBBLE ===== */
 .bubble {
-  max-width: 72%;
-  padding: 10px 14px;
+  max-width: 78%;
+  padding: 12px 14px;
   border-radius: 16px;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.4;
+  word-wrap: break-word;
 }
 
 .bot .bubble {
   background: #ececec;
-  border-bottom-left-radius: 4px;
+  border-bottom-left-radius: 6px;
 }
 
 .user .bubble {
   background: linear-gradient(135deg,#d4af37,#b8962e);
   color: #fff;
-  border-bottom-right-radius: 4px;
+  border-bottom-right-radius: 6px;
 }
 
-/* TYPING DOTS */
+/* ===== TYPING DOTS ===== */
 .typing {
   display: flex;
   align-items: center;
   margin-left: 42px;
+  margin-bottom: 8px;
 }
 
 .dot {
@@ -122,35 +136,37 @@ body {
   100% { opacity: .2; }
 }
 
-/* INPUT AREA */
+/* ===== INPUT AREA ===== */
 .input-area {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   padding: 10px;
   border-top: 1px solid #ddd;
+  background: #fff;
 }
 
 .attach {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 1px solid #d6c27a;
   background: #fff;
   color: #9f7c19;
-  font-size: 18px;
+  font-size: 20px;
   cursor: pointer;
 }
 
 input[type="text"] {
   flex: 1;
-  padding: 9px 14px;
-  border-radius: 20px;
+  padding: 10px 14px;
+  border-radius: 22px;
   border: 1px solid #ccc;
+  font-size: 15px;
 }
 
 .send {
-  padding: 8px 16px;
-  border-radius: 20px;
+  padding: 10px 18px;
+  border-radius: 22px;
   border: none;
   background: linear-gradient(135deg,#c9a23f,#9f7c19);
   color: #fff;
@@ -261,7 +277,7 @@ imageInput.addEventListener("change", async () => {
 
   const reader = new FileReader();
   reader.onload = () => {
-    addUser(`<img src="${reader.result}" style="max-width:140px;border-radius:10px">`);
+    addUser(`<img src="${reader.result}" style="max-width:160px;border-radius:10px">`);
   };
   reader.readAsDataURL(file);
 
