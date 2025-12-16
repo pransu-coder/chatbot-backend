@@ -16,28 +16,29 @@ html, body {
   background: #f2f2f2;
 }
 
-/* ===== PAGE WRAPPER ===== */
 .page {
-  min-height: 100vh;
+  min-height: 100svh; /* 🔥 FIX: real mobile viewport height */
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* ===== CHAT CONTAINER ===== */
+/* ===== CHAT APP ===== */
 .chat-app {
   width: 100%;
-  height: 100vh;
   max-width: 420px;
+  height: 100svh;        /* 🔥 mobile correct height */
+  max-height: 100svh;
   background: #fff;
   display: flex;
   flex-direction: column;
 }
 
+
 /* Laptop / Desktop card */
 @media (min-width: 768px) {
   .chat-app {
-    height: 550px;
+    height: 640px;
     border-radius: 16px;
     box-shadow: 0 15px 40px rgba(0,0,0,.15);
   }
