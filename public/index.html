@@ -1,13 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Welcome to GoldenBangle Chat Support</title>
-
+  <title>GoldenBangle Support</title>
   <style>
-    * { box-sizing: border-box; }
-
     body {
-      font-family: "Segoe UI", sans-serif;
+      font-family: Arial, sans-serif;
       background: #fff9e6;
       display: flex;
       justify-content: center;
@@ -15,193 +12,103 @@
       height: 100vh;
       margin: 0;
     }
-
-    .chat-container {
-      width: 380px;
-      height: 560px;
-      background: #ffffff;
+    .chat {
+      width: 360px;
+      height: 540px;
+      background: #fff;
       border-radius: 16px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.18);
+      box-shadow: 0 10px 30px rgba(0,0,0,.2);
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
-
-    .chat-header {
-      background: linear-gradient(135deg, #c9a23f, #9f7c19);
-      color: #fff;
-      padding: 14px;
-      font-size: 16px;
-      font-weight: 600;
-      text-align: center;
+    .header {
+      background: linear-gradient(135deg,#c9a23f,#9f7c19);
+      color:#fff;
+      padding:14px;
+      text-align:center;
+      font-weight:600;
     }
-
     #messages {
-      flex: 1;
-      padding: 14px;
-      overflow-y: auto;
-      background: #fafafa;
+      flex:1;
+      padding:12px;
+      overflow-y:auto;
+      background:#fafafa;
     }
-
-    .row {
-      display: flex;
-      margin-bottom: 10px;
-      align-items: flex-end;
+    .msg {
+      margin-bottom:10px;
+      max-width:75%;
+      padding:10px 14px;
+      border-radius:14px;
+      font-size:14px;
     }
-
-    .row.user { justify-content: flex-end; }
-
-    .avatar {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #c9a23f, #9f7c19);
-      color: #fff;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 8px;
+    .user {
+      background:#d4af37;
+      color:#fff;
+      margin-left:auto;
     }
-
-    .bubble {
-      max-width: 72%;
-      padding: 10px 14px;
-      border-radius: 14px;
-      font-size: 14px;
+    .bot {
+      background:#eee;
+      color:#333;
     }
-
-    .user .bubble {
-      background: linear-gradient(135deg, #d4af37, #b8962e);
-      color: #fff;
-      border-bottom-right-radius: 4px;
+    .input {
+      display:flex;
+      gap:6px;
+      padding:10px;
+      border-top:1px solid #ddd;
     }
-
-    .bot .bubble {
-      background: #eeeeee;
-      color: #333;
-      border-bottom-left-radius: 4px;
+    input {
+      flex:1;
+      padding:8px 12px;
+      border-radius:18px;
+      border:1px solid #ccc;
     }
-
-    .typing {
-      font-size: 13px;
-      color: #777;
-      margin-left: 38px;
-      font-style: italic;
-    }
-
-    .input-area {
-      display: flex;
-      gap: 6px;
-      padding: 10px;
-      border-top: 1px solid #e0e0e0;
-    }
-
-    .attach {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: 1px solid #d6c27a;
-      background: #fff;
-      color: #9f7c19;
-      font-size: 18px;
-      cursor: pointer;
-    }
-
-    input[type="text"] {
-      flex: 1;
-      padding: 9px 12px;
-      border-radius: 18px;
-      border: 1px solid #ccc;
-    }
-
-    .send {
-      padding: 8px 16px;
-      border-radius: 18px;
-      border: none;
-      background: linear-gradient(135deg, #c9a23f, #9f7c19);
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
+    button {
+      padding:8px 14px;
+      border:none;
+      border-radius:18px;
+      background:#c9a23f;
+      color:#fff;
+      font-weight:600;
+      cursor:pointer;
     }
   </style>
 </head>
 
 <body>
 
-<div class="chat-container">
-  <div class="chat-header">💎 GoldenBangle Support</div>
+<div class="chat">
+  <div class="header">💎 GoldenBangle Support</div>
   <div id="messages"></div>
-
-  <div class="input-area">
-    <button class="attach" onclick="imageInput.click()">+</button>
-    <input type="file" id="imageInput" hidden accept="image/*">
-    <input type="text" id="input" placeholder="Type a message">
-    <button class="send" onclick="send()">Send</button>
+  <div class="input">
+    <input id="input" placeholder="Type a message">
+    <button onclick="send()">Send</button>
   </div>
 </div>
 
 <script>
-  const API_URL = "https://chatbot-api.onrender.com/api/chat"; // ✔ correct
+  const API_URL = "https://chatbot-api.onrender.com/api/chat";
   const messages = document.getElementById("messages");
   const input = document.getElementById("input");
-  const imageInput = document.getElementById("imageInput");
   const userId = "web-" + Date.now();
-  let typing = null;
 
-  function scrollDown() {
+  function add(text, cls) {
+    const div = document.createElement("div");
+    div.className = "msg " + cls;
+    div.textContent = text;
+    messages.appendChild(div);
     messages.scrollTop = messages.scrollHeight;
-  }
-
-  function removeTyping() {
-    if (typing) {
-      typing.remove();
-      typing = null;
-    }
-  }
-
-  function addUserText(text) {
-    const row = document.createElement("div");
-    row.className = "row user";
-    row.innerHTML = `<div class="bubble">${text}</div>`;
-    messages.appendChild(row);
-    scrollDown();
-  }
-
-  function addBot(text) {
-    removeTyping();
-    const row = document.createElement("div");
-    row.className = "row bot";
-    row.innerHTML = `
-      <div class="avatar">GB</div>
-      <div class="bubble">${text}</div>
-    `;
-    messages.appendChild(row);
-    scrollDown();
-  }
-
-  function showTyping() {
-    removeTyping();
-    typing = document.createElement("div");
-    typing.className = "typing";
-    typing.textContent = "GoldenBangle is typing...";
-    messages.appendChild(typing);
-    scrollDown();
   }
 
   async function send() {
     const text = input.value.trim();
     if (!text) return;
-
-    addUserText(text);
+    add(text, "user");
     input.value = "";
-    showTyping();
-
-    console.log("API HIT:", API_URL);
 
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
+      const timeout = setTimeout(() => controller.abort(), 10000);
 
       const res = await fetch(API_URL, {
         method: "POST",
@@ -212,43 +119,12 @@
 
       clearTimeout(timeout);
       const data = await res.json();
-      addBot(data.reply || "Support is temporarily unavailable.");
-
-    } catch (err) {
-      addBot("Server not responding. Please try again.");
-    }
-  }
-
-  imageInput.addEventListener("change", async () => {
-    const file = imageInput.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const row = document.createElement("div");
-      row.className = "row user";
-      row.innerHTML = `<div class="bubble"><img src="${reader.result}" style="max-width:160px"></div>`;
-      messages.appendChild(row);
-      scrollDown();
-    };
-    reader.readAsDataURL(file);
-
-    showTyping();
-
-    try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, imageUploaded: true })
-      });
-
-      const data = await res.json();
-      addBot(data.reply || "Image received.");
+      add(data.reply || "Support unavailable", "bot");
 
     } catch {
-      addBot("Upload failed.");
+      add("Server not responding. Please try again.", "bot");
     }
-  });
+  }
 
   input.addEventListener("keydown", e => {
     if (e.key === "Enter") send();
