@@ -3,66 +3,16 @@ import express from "express";
 const router = express.Router();
 const sessions = new Map();
 
-/* ================= TRAINING DATA ================= */
-
-const TRAINING = {
-  GREET: {
-    match: /(hi|hello|hey|namaste)/i,
-    reply:
-      "✨ Welcome to GoldenBangle Support.\n" +
-      "How may I assist you today?"
-  },
-
-  PRICE: {
-    match: /(price|cost|rate|charges)/i,
-    reply:
-      "💰 *Pricing Information*\n" +
-      "Bangle prices depend on:\n" +
-      "• Gold/Silver rate\n" +
-      "• Weight & design\n" +
-      "• Making charges\n\n" +
-      "For exact pricing, please visit our showroom or website."
-  },
-
-  CARE: {
-    match: /(care|clean|maintain)/i,
-    reply:
-      "💎 *Bangle Care Tips*\n" +
-      "• Avoid water & chemicals\n" +
-      "• Store in soft cloth pouch\n" +
-      "• Clean gently with dry cloth"
-  },
-
-  POLISH: {
-    match: /(polish|shine|dull)/i,
-    reply:
-      "✨ *Polishing Service*\n" +
-      "We provide professional polishing for gold & silver bangles."
-  },
-
-  DELIVERY: {
-    match: /(delivery|shipping|courier)/i,
-    reply:
-      "🚚 *Delivery Information*\n" +
-      "Orders are delivered within 5–7 working days."
-  },
-
-  THANKS: {
-    match: /(thank|thanks)/i,
-    reply:
-      "🙏 Thank you for choosing GoldenBangle.\n" +
-      "I’m here if you need further assistance."
-  },
-
-  NOT_ALLOWED: {
-    match: /(mobile|laptop|tv|charger|electronics)/i,
-    reply:
-      "❌ I can assist only with gold or silver bangles.\n" +
-      "Please let me know your jewellery-related query."
-  }
+/* ===== KEYWORD GROUPS ===== */
+const is = {
+  greet: m => /(hi|hello|hey|namaste)/i.test(m),
+  issue: m => /(complaint|repair|broken|damage|issue|problem)/i.test(m),
+  price: m => /(price|cost|rate)/i.test(m),
+  care: m => /(care|clean|maintain)/i.test(m),
+  polish: m => /(polish|shine|dull)/i.test(m),
+  thanks: m => /(thank)/i.test(m),
+  notAllowed: m => /(mobile|laptop|tv|charger|electronics)/i.test(m),
 };
-
-/* ================= COMPLAINT FLOW ================= */
 
 router.post("/", (req, res) => {
   const { message = "", userId, imageUploaded } = req.body || {};
@@ -72,43 +22,47 @@ router.post("/", (req, res) => {
 
   const msg = message.toLowerCase();
 
-  /* INIT SESSION */
+  /* ===== INIT SESSION ===== */
   if (!sessions.has(userId)) {
     sessions.set(userId, { step: 0, data: {} });
-    return res.json({ reply: TRAINING.GREET.reply });
+    return res.json({
+      reply:
+        "✨ Welcome to GoldenBangle Support.\n" +
+        "How may I assist you today?"
+    });
   }
 
   const session = sessions.get(userId);
 
-  /* ================= TRAINED INTENTS ================= */
+  /* ===================================================
+     🔥 COMPLAINT FLOW (TOP PRIORITY – FIXED)
+  =================================================== */
 
-  for (const key in TRAINING) {
-    if (TRAINING[key].match.test(msg)) {
-      return res.json({ reply: TRAINING[key].reply });
-    }
-  }
-
-  /* ================= COMPLAINT FLOW ================= */
-
-  if (session.step === 0 && /(broken|damage|issue|problem)/i.test(msg)) {
+  // START COMPLAINT
+  if (session.step === 0 && is.issue(msg)) {
     session.step = 1;
     return res.json({
-      reply: "🛠 Please describe the issue you are facing with your bangle."
+      reply:
+        "🛠 I’m sorry to hear that.\n" +
+        "Please describe the issue you are facing with your bangle."
     });
   }
 
+  // ISSUE DESCRIPTION
   if (session.step === 1) {
     session.data.issue = message;
     session.step = 2;
     return res.json({ reply: "👤 Please share your full name." });
   }
 
+  // NAME
   if (session.step === 2) {
     session.data.name = message;
     session.step = 3;
     return res.json({ reply: "📧 Please share your email address." });
   }
 
+  // EMAIL
   if (session.step === 3) {
     if (!message.includes("@")) {
       return res.json({ reply: "Please enter a valid email address." });
@@ -118,6 +72,7 @@ router.post("/", (req, res) => {
     return res.json({ reply: "📞 Please share your phone number." });
   }
 
+  // PHONE
   if (session.step === 4) {
     if (message.length < 8) {
       return res.json({ reply: "Please enter a valid phone number." });
@@ -127,26 +82,71 @@ router.post("/", (req, res) => {
     return res.json({ reply: "📷 Please upload a clear image of the bangle." });
   }
 
+  // IMAGE → SUCCESS
   if (session.step === 5 && imageUploaded) {
     const id = "GB" + Math.floor(1000 + Math.random() * 9000);
     sessions.delete(userId);
 
     return res.json({
       reply:
-        "✅ *Complaint Registered Successfully*\n\n" +
+        "✅ Complaint registered successfully.\n\n" +
         `🆔 Complaint ID: ${id}\n\n` +
-        "Our jewellery expert team will contact you shortly."
+        "Our team will contact you shortly."
     });
   }
 
-  /* ================= SAFE FALLBACK ================= */
+  /* ===================================================
+     GENERAL JEWELLERY REPLIES (AFTER COMPLAINT)
+  =================================================== */
 
+  if (is.greet(msg)) {
+    return res.json({ reply: "Hello 😊 How can I help you?" });
+  }
+
+  if (is.price(msg)) {
+    return res.json({
+      reply:
+        "💰 Bangle prices depend on gold/silver rate, weight and design."
+    });
+  }
+
+  if (is.care(msg)) {
+    return res.json({
+      reply:
+        "💎 Bangle Care Tips:\n" +
+        "• Avoid water & chemicals\n" +
+        "• Store in soft cloth\n" +
+        "• Clean with dry cloth"
+    });
+  }
+
+  if (is.polish(msg)) {
+    return res.json({
+      reply:
+        "✨ We provide professional polishing for gold & silver bangles."
+    });
+  }
+
+  if (is.thanks(msg)) {
+    return res.json({
+      reply: "🙏 Thank you for choosing GoldenBangle."
+    });
+  }
+
+  if (is.notAllowed(msg)) {
+    return res.json({
+      reply:
+        "❌ I can assist only with gold or silver bangles and jewellery services."
+    });
+  }
+
+  /* ===== SAFE FALLBACK ===== */
   return res.json({
     reply:
       "💬 I can help you with:\n" +
-      "• Gold & silver bangles\n" +
-      "• Repair or replacement\n" +
-      "• Care & polishing\n\n" +
+      "• Bangle repair or replacement\n" +
+      "• Care & polishing\n" +
+      "• Pricing information\n\n" +
       "Please tell me your concern."
   });
 });
