@@ -11,7 +11,6 @@ router.post("/", async (req, res) => {
     return res.json({ reply: "Please refresh the page and try again." });
   }
 
-  // IMAGE UPLOAD → FINAL
   if (imageUploaded) {
     sessions.delete(userId);
     const id = "GD" + Math.floor(1000 + Math.random() * 9000);
@@ -23,9 +22,8 @@ router.post("/", async (req, res) => {
     });
   }
 
-  // FIRST MESSAGE → DIRECT GREETING (NO AI)
   if (!sessions.has(userId)) {
-    sessions.set(userId, true);
+    sessions.set(userId, { step: 1 });
     return res.json({
       reply: "Hello, welcome to GoldenBangle support."
     });
@@ -35,14 +33,19 @@ router.post("/", async (req, res) => {
     return res.json({ reply: "Please type your message." });
   }
 
-  // TRY AI WITH TIMEOUT
-  const aiReply = await Promise.race([
-    getChatResponse([
-      { role: "system", content: "You are GoldenBangle customer support." },
-      { role: "user", content: message }
-    ]),
-    new Promise(resolve => setTimeout(() => resolve(null), 2500))
-  ]);
+  let aiReply = null;
+
+  try {
+    aiReply = await Promise.race([
+      getChatResponse([
+        { role: "system", content: "You are GoldenBangle customer support." },
+        { role: "user", content: message }
+      ]),
+      new Promise(resolve => setTimeout(() => resolve(null), 2500))
+    ]);
+  } catch (err) {
+    console.error("🔥 Groq error:", err.message);
+  }
 
   return res.json({
     reply: aiReply || "Could you please describe the issue you are facing?"
