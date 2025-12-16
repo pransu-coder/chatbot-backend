@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-  
   <title>Welcome to GoldenBangle Chat Support</title>
 
   <style>
@@ -74,7 +73,6 @@
       border-radius: 14px;
       font-size: 14px;
       line-height: 1.4;
-      animation: fade 0.25s ease;
     }
 
     .user .bubble {
@@ -140,11 +138,6 @@
       font-weight: 600;
       cursor: pointer;
     }
-
-    @keyframes fade {
-      from { opacity: 0; transform: translateY(3px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
   </style>
 </head>
 
@@ -152,7 +145,6 @@
 
 <div class="chat-container">
   <div class="chat-header">💎 GoldenBangle Support</div>
-
   <div id="messages"></div>
 
   <div class="input-area">
@@ -164,13 +156,15 @@
 </div>
 
 <script>
+  const API_URL = "https://chatbot-api.onrender.com/api/chat"; // 🔥 CHANGE IF NEEDED
+
   const messages = document.getElementById("messages");
   const input = document.getElementById("input");
   const imageInput = document.getElementById("imageInput");
   const userId = "web-" + Date.now();
   let typing;
 
-  function scroll() {
+  function scrollDown() {
     messages.scrollTop = messages.scrollHeight;
   }
 
@@ -179,7 +173,7 @@
     row.className = "row user";
     row.innerHTML = `<div class="bubble">${text}</div>`;
     messages.appendChild(row);
-    scroll();
+    scrollDown();
   }
 
   function addUserImage(src) {
@@ -187,7 +181,7 @@
     row.className = "row user";
     row.innerHTML = `<div class="bubble"><img src="${src}"></div>`;
     messages.appendChild(row);
-    scroll();
+    scrollDown();
   }
 
   function addBot(text) {
@@ -199,7 +193,7 @@
       <div class="bubble">${text}</div>
     `;
     messages.appendChild(row);
-    scroll();
+    scrollDown();
   }
 
   function showTyping() {
@@ -207,7 +201,7 @@
     typing.className = "typing";
     typing.textContent = "GoldenBangle is typing...";
     messages.appendChild(typing);
-    scroll();
+    scrollDown();
   }
 
   async function send() {
@@ -219,48 +213,40 @@
     showTyping();
 
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, userId })
       });
+
       const data = await res.json();
-      setTimeout(() => addBot(data.reply), 400);
+      setTimeout(() => addBot(data.reply || "No response"), 400);
     } catch {
       setTimeout(() => addBot("Please try again later."), 400);
     }
   }
 
-  // 🔥 IMAGE UPLOAD — NO BOT MESSAGE HERE
- imageInput.addEventListener("change", async () => {
-  const file = imageInput.files[0];
-  if (!file) return;
+  imageInput.addEventListener("change", async () => {
+    const file = imageInput.files[0];
+    if (!file) return;
 
-  // 1️⃣ show user image
-  const reader = new FileReader();
-  reader.onload = () => addUserImage(reader.result);
-  reader.readAsDataURL(file);
+    const reader = new FileReader();
+    reader.onload = () => addUserImage(reader.result);
+    reader.readAsDataURL(file);
 
-  // 2️⃣ 🔥 BACKEND KO BATAO: IMAGE UPLOADED
-  try {
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId,
-        imageUploaded: true
-      })
-    });
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, imageUploaded: true })
+      });
 
-    const data = await res.json();
-
-    // 3️⃣ backend se jo msg aaye, wahi print karo
-    if (data.reply) addBot(data.reply);
-    if (data.replies) data.replies.forEach(m => addBot(m));
-  } catch {
-    addBot("Something went wrong. Please try again.");
-  }
-});
+      const data = await res.json();
+      if (data.reply) addBot(data.reply);
+    } catch {
+      addBot("Upload failed.");
+    }
+  });
 
   input.addEventListener("keydown", e => {
     if (e.key === "Enter") send();
