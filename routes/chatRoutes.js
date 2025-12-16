@@ -5,7 +5,7 @@ const router = express.Router();
 const sessions = new Map();
 
 router.post("/", async (req, res) => {
-  const { message, userId, imageUploaded } = req.body;
+  const { message, userId, imageUploaded } = req.body || {};
 
   if (!userId) {
     return res.json({ reply: "Please refresh the page and try again." });
