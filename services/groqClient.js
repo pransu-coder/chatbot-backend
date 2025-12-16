@@ -1,22 +1,22 @@
 import Groq from "groq-sdk";
 
+const apiKey = process.env.GROQ_API_KEY;
+const groq = apiKey ? new Groq({ apiKey }) : null;
+
 export async function getChatResponse(messages) {
+  if (!groq) return null;
+
   try {
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) return null;
-
-    const groq = new Groq({ apiKey });
-
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant", // fast & stable
+      model: "llama-3.1-8b-instant",
       messages,
       temperature: 0.3,
       max_tokens: 120,
     });
 
-    const text = completion?.choices?.[0]?.message?.content;
-    return text && text.trim() ? text.trim() : null;
-  } catch {
+    return completion?.choices?.[0]?.message?.content?.trim() || null;
+  } catch (err) {
+    console.error("🔥 Groq SDK error:", err.message);
     return null;
   }
 }
