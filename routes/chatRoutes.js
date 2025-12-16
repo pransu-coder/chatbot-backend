@@ -44,34 +44,36 @@ router.post("/", async (req, res) => {
 
       return res.json({
         reply:
-          `Thank you for uploading the product image. ` +
+          `Thank you for uploading the product image.\n` +
           `Your complaint has been registered.\n\n` +
           `You will receive an update within 24 to 48 hours.\n\n` +
           `Complaint ID: ${complaintId}`
       });
     }
 
+    // 🟢 FIRST MESSAGE → DIRECT GREETING (NO AI CALL)
+    if (!sessions.has(userId)) {
+      sessions.set(userId, [SYSTEM_PROMPT]);
+
+      return res.json({
+        reply: "Hello, welcome to GoldenBangle support."
+      });
+    }
+
+    // 🧠 NORMAL CHAT FLOW (AI STARTS HERE)
     if (!message) {
       return res.json({ reply: "Please type your message." });
     }
 
-    let history = sessions.get(userId);
-
-    // 🟢 FIRST MESSAGE → FORCE GREETING FLOW
-    if (!history) {
-      history = [SYSTEM_PROMPT];
-      sessions.set(userId, history);
-    }
-
+    const history = sessions.get(userId);
     history.push({ role: "user", content: message });
 
     const aiReply = await getChatResponse(history.slice(-10));
 
-    // 🔥 EMPTY / FAIL-SAFE REPLY
     const reply =
       aiReply && aiReply.trim()
         ? aiReply
-        : "Hello, welcome to GoldenBangle support.";
+        : "Could you please describe the issue you are facing?";
 
     history.push({ role: "assistant", content: reply });
     sessions.set(userId, history);
@@ -79,7 +81,6 @@ router.post("/", async (req, res) => {
     res.json({ reply });
 
   } catch {
-    // 🔥 NEVER CRASH FRONTEND
     res.json({
       reply: "Sorry, something went wrong. Please try again."
     });
