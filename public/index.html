@@ -5,51 +5,59 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>GoldenBangle Support</title>
 
-<style>
-* { box-sizing: border-box; }
 
-body {
-  margin: 0;
-  font-family: "Segoe UI", sans-serif;
-  background: #fdf6e3;
+<style>
+* {
+  box-sizing: border-box;
 }
 
-/* ===== APP WRAPPER ===== */
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #f5f6fa;
+}
+
+/* ================= PAGE WRAPPER ================= */
+.page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ================= CHAT CARD ================= */
 .chat-app {
   width: 100%;
-  height: 100vh;
-  background: #fff;
+  height: 100%;
+  max-width: 420px;
+  max-height: 680px;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
+  border-radius: 0;
 }
 
-/* Desktop view */
+/* DESKTOP CARD STYLE */
 @media (min-width: 768px) {
-  body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
   .chat-app {
-    width: 400px;
-    height: 600px;
     border-radius: 18px;
-    box-shadow: 0 20px 45px rgba(0,0,0,.18);
-    overflow: hidden;
+    box-shadow: 0 18px 45px rgba(0,0,0,.15);
+    height: 640px;
   }
 }
 
-/* ===== HEADER ===== */
+/* ================= HEADER ================= */
 .header {
-  background: linear-gradient(135deg,#c9a23f,#9f7c19);
-  color: #fff;
   padding: 14px;
   text-align: center;
   font-weight: 600;
   font-size: 16px;
+  color: #fff;
+  background: linear-gradient(135deg,#c9a23f,#9f7c19);
 }
 
-/* ===== MESSAGES ===== */
+/* ================= MESSAGES ================= */
 .messages {
   flex: 1;
   padding: 14px;
@@ -57,10 +65,10 @@ body {
   background: #fafafa;
 }
 
-/* ===== ROW ===== */
+/* ================= CHAT ROW ================= */
 .row {
   display: flex;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   align-items: flex-end;
 }
 
@@ -68,7 +76,7 @@ body {
   justify-content: flex-end;
 }
 
-/* ===== AVATAR ===== */
+/* ================= AVATAR ================= */
 .avatar {
   width: 32px;
   height: 32px;
@@ -84,18 +92,18 @@ body {
 }
 
 .row.user .avatar {
-  background: #999;
+  background: #aaa;
   margin-left: 8px;
   margin-right: 0;
 }
 
-/* ===== BUBBLE ===== */
+/* ================= BUBBLE ================= */
 .bubble {
-  max-width: 78%;
+  max-width: 76%;
   padding: 12px 14px;
   border-radius: 16px;
-  font-size: 15px;
-  line-height: 1.4;
+  font-size: 14px;
+  line-height: 1.45;
   word-wrap: break-word;
 }
 
@@ -110,20 +118,19 @@ body {
   border-bottom-right-radius: 6px;
 }
 
-/* ===== TYPING DOTS ===== */
+/* ================= TYPING ================= */
 .typing {
   display: flex;
-  align-items: center;
-  margin-left: 42px;
-  margin-bottom: 8px;
+  margin-left: 40px;
+  gap: 5px;
+  margin-bottom: 10px;
 }
 
 .dot {
   width: 6px;
   height: 6px;
-  margin-right: 4px;
-  background: #aaa;
   border-radius: 50%;
+  background: #bbb;
   animation: blink 1.4s infinite both;
 }
 
@@ -131,17 +138,17 @@ body {
 .dot:nth-child(3) { animation-delay: .4s; }
 
 @keyframes blink {
-  0% { opacity: .2; }
+  0% { opacity: .3; }
   20% { opacity: 1; }
-  100% { opacity: .2; }
+  100% { opacity: .3; }
 }
 
-/* ===== INPUT AREA ===== */
+/* ================= INPUT ================= */
 .input-area {
+  padding: 10px;
   display: flex;
   gap: 8px;
-  padding: 10px;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid #e0e0e0;
   background: #fff;
 }
 
@@ -161,7 +168,7 @@ input[type="text"] {
   padding: 10px 14px;
   border-radius: 22px;
   border: 1px solid #ccc;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .send {
