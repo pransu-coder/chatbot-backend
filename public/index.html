@@ -142,7 +142,7 @@
 </div>
 
 <script>
-  const API_URL = "https://chatbot-api.onrender.com/api/chat";
+  const API_URL = "https://chatbot-api.onrender.com/api/chat"; // ✔ correct
   const messages = document.getElementById("messages");
   const input = document.getElementById("input");
   const imageInput = document.getElementById("imageInput");
@@ -197,18 +197,25 @@
     input.value = "";
     showTyping();
 
+    console.log("API HIT:", API_URL);
+
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({ message: text, userId })
       });
 
+      clearTimeout(timeout);
       const data = await res.json();
-      addBot(data.reply || "Thank you for contacting GoldenBangle support.");
+      addBot(data.reply || "Support is temporarily unavailable.");
 
-    } catch {
-      addBot("Please try again later.");
+    } catch (err) {
+      addBot("Server not responding. Please try again.");
     }
   }
 
@@ -218,7 +225,11 @@
 
     const reader = new FileReader();
     reader.onload = () => {
-      addUserText(`<img src="${reader.result}" style="max-width:160px">`);
+      const row = document.createElement("div");
+      row.className = "row user";
+      row.innerHTML = `<div class="bubble"><img src="${reader.result}" style="max-width:160px"></div>`;
+      messages.appendChild(row);
+      scrollDown();
     };
     reader.readAsDataURL(file);
 
