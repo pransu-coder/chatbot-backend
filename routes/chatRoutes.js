@@ -1,4 +1,5 @@
 import express from "express";
+import { getChatResponse } from "../services/groqClient.js";
 
 const router = express.Router();
 const sessions = new Map();
@@ -7,10 +8,10 @@ router.post("/", async (req, res) => {
   const { message, userId, imageUploaded } = req.body;
 
   if (!userId) {
-    return res.json({ reply: "Session error. Please refresh." });
+    return res.json({ reply: "Please refresh the page and try again." });
   }
 
-  // IMAGE UPLOAD FINAL STEP
+  // IMAGE UPLOAD → FINAL
   if (imageUploaded) {
     sessions.delete(userId);
     const id = "GD" + Math.floor(1000 + Math.random() * 9000);
@@ -22,58 +23,29 @@ router.post("/", async (req, res) => {
     });
   }
 
-  // FIRST MESSAGE
+  // FIRST MESSAGE → DIRECT GREETING (NO AI)
   if (!sessions.has(userId)) {
-    sessions.set(userId, { step: 1 });
+    sessions.set(userId, true);
     return res.json({
       reply: "Hello, welcome to GoldenBangle support."
     });
   }
 
-  const session = sessions.get(userId);
-
-  // STEP 2
-  if (session.step === 1) {
-    session.step = 2;
-    return res.json({
-      reply: "What issue are you facing?"
-    });
+  if (!message) {
+    return res.json({ reply: "Please type your message." });
   }
 
-  // STEP 3
-  if (session.step === 2) {
-    session.step = 3;
-    return res.json({
-      reply: "May I have your name?"
-    });
-  }
-
-  // STEP 4
-  if (session.step === 3) {
-    session.step = 4;
-    return res.json({
-      reply: "Please share your email address."
-    });
-  }
-
-  // STEP 5
-  if (session.step === 4) {
-    session.step = 5;
-    return res.json({
-      reply: "Please share your phone number."
-    });
-  }
-
-  // STEP 6
-  if (session.step === 5) {
-    session.step = 6;
-    return res.json({
-      reply: "Please upload a clear image of the product."
-    });
-  }
+  // TRY AI WITH TIMEOUT
+  const aiReply = await Promise.race([
+    getChatResponse([
+      { role: "system", content: "You are GoldenBangle customer support." },
+      { role: "user", content: message }
+    ]),
+    new Promise(resolve => setTimeout(() => resolve(null), 2500))
+  ]);
 
   return res.json({
-    reply: "Please upload the product image to proceed."
+    reply: aiReply || "Could you please describe the issue you are facing?"
   });
 });
 
