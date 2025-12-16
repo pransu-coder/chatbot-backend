@@ -4,11 +4,18 @@ import { getChatResponse } from "../services/groqClient.js";
 const router = express.Router();
 const sessions = new Map();
 
-const isGreeting = (msg) =>
-  /hi|hello|hey|namaste/i.test(msg);
+/* ================= INTENT DETECTORS ================= */
 
-const isHelp = (msg) =>
-  /help|support|guide|confused|samajh/i.test(msg);
+const intent = {
+  greet: (m) => /hi|hello|hey|namaste/i.test(m),
+  thanks: (m) => /thank|thanks|thx/i.test(m),
+  refund: (m) => /refund|money back|return/i.test(m),
+  replace: (m) => /replace|replacement|exchange/i.test(m),
+  delivery: (m) => /delivery|ship|shipping|courier/i.test(m),
+  price: (m) => /price|cost|rate/i.test(m),
+  complaint: (m) => /broken|damage|issue|problem|complaint/i.test(m),
+  help: (m) => /help|support|samajh|confused/i.test(m)
+};
 
 router.post("/", async (req, res) => {
   const { message = "", userId, imageUploaded } = req.body || {};
@@ -16,38 +23,77 @@ router.post("/", async (req, res) => {
     return res.json({ reply: "Please refresh the page and try again." });
   }
 
-  /* ===== INIT SESSION ===== */
+  const msg = message.trim();
+
+  /* ================= INIT SESSION ================= */
   if (!sessions.has(userId)) {
     sessions.set(userId, { step: 0, data: {}, lastQuestion: "" });
     return res.json({
-      reply: "Hello 👋 Welcome to GoldenBangle support. How may I assist you today?"
+      reply: "Hello 👋 Welcome to GoldenBangle support. How can I help you today?"
     });
   }
 
   const session = sessions.get(userId);
-  const msg = message.trim();
 
-  /* ===== GLOBAL SMART HANDLING ===== */
+  /* ================= GLOBAL INTENTS ================= */
 
-  if (isGreeting(msg)) {
+  if (intent.greet(msg)) {
     return res.json({
-      reply: "Hello 😊 Please tell me what issue you are facing with your product."
+      reply: "Hello 😊 How may I assist you today?"
     });
   }
 
-  if (isHelp(msg)) {
+  if (intent.thanks(msg)) {
+    return res.json({
+      reply: "You’re welcome 😊 If you need any more help, just let me know."
+    });
+  }
+
+  if (intent.price(msg)) {
     return res.json({
       reply:
-        "I’m here to help you 😊\n" +
-        "You can report a product issue, ask about orders, or get support.\n\n" +
-        (session.lastQuestion || "Please describe your issue.")
+        "Our product prices vary based on design and weight.\n" +
+        "Please visit our website or contact our sales team for exact pricing."
     });
   }
 
-  /* ===== STEP FLOW ===== */
+  if (intent.delivery(msg)) {
+    return res.json({
+      reply:
+        "We usually deliver orders within 5–7 working days.\n" +
+        "You will receive tracking details once the order is shipped."
+    });
+  }
 
-  // STEP 0 → ASK ISSUE
-  if (session.step === 0) {
+  if (intent.refund(msg)) {
+    return res.json({
+      reply:
+        "Refunds are processed after product inspection.\n" +
+        "Please register a complaint so our team can assist you further."
+    });
+  }
+
+  if (intent.replace(msg)) {
+    return res.json({
+      reply:
+        "Replacement is available for damaged or incorrect products.\n" +
+        "Please report the issue and upload the product image."
+    });
+  }
+
+  if (intent.help(msg)) {
+    return res.json({
+      reply:
+        "I can help you with:\n" +
+        "• Product issues\n• Refund or replacement\n• Delivery information\n\n" +
+        "Please tell me what you need help with."
+    });
+  }
+
+  /* ================= COMPLAINT FLOW ================= */
+
+  // STEP 0 → START COMPLAINT
+  if (session.step === 0 && intent.complaint(msg)) {
     session.step = 1;
     session.lastQuestion = "Please describe the issue you are facing.";
     return res.json({ reply: session.lastQuestion });
@@ -55,9 +101,6 @@ router.post("/", async (req, res) => {
 
   // STEP 1 → ISSUE
   if (session.step === 1) {
-    if (!msg) {
-      return res.json({ reply: "Please describe your issue." });
-    }
     session.data.issue = msg;
     session.step = 2;
     session.lastQuestion = "May I have your full name?";
@@ -66,9 +109,6 @@ router.post("/", async (req, res) => {
 
   // STEP 2 → NAME
   if (session.step === 2) {
-    if (msg.length < 2) {
-      return res.json({ reply: "Please enter a valid name." });
-    }
     session.data.name = msg;
     session.step = 3;
     session.lastQuestion = "Please share your email address.";
@@ -97,27 +137,23 @@ router.post("/", async (req, res) => {
     return res.json({ reply: session.lastQuestion });
   }
 
-  // STEP 5 → IMAGE
+  // STEP 5 → IMAGE UPLOAD
   if (session.step === 5 && imageUploaded) {
     const id = "GD" + Math.floor(1000 + Math.random() * 9000);
 
-    console.log("📦 Complaint Registered:", {
-      id,
-      ...session.data
-    });
+    console.log("📦 Complaint:", { id, ...session.data });
 
     sessions.delete(userId);
 
     return res.json({
       reply:
-        `✅ Thank you for uploading the product image.\n\n` +
-        `Your complaint has been registered successfully.\n\n` +
+        `✅ Complaint Registered Successfully!\n\n` +
         `🆔 Complaint ID: ${id}\n\n` +
         `Our support team will contact you shortly.`
     });
   }
 
-  /* ===== SMART AI ASSIST (NON-BLOCKING) ===== */
+  /* ================= AI FALLBACK (SMART) ================= */
 
   let aiReply = null;
   try {
@@ -126,7 +162,7 @@ router.post("/", async (req, res) => {
         {
           role: "system",
           content:
-            "You are a helpful GoldenBangle customer support assistant. Answer briefly and politely."
+            "You are a helpful GoldenBangle customer support assistant. Answer clearly and briefly."
         },
         { role: "user", content: msg }
       ]),
@@ -135,10 +171,7 @@ router.post("/", async (req, res) => {
   } catch {}
 
   return res.json({
-    reply:
-      aiReply ||
-      session.lastQuestion ||
-      "Please continue."
+    reply: aiReply || session.lastQuestion || "Please tell me how I can help you."
   });
 });
 
