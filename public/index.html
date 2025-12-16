@@ -49,9 +49,7 @@
       align-items: flex-end;
     }
 
-    .row.user {
-      justify-content: flex-end;
-    }
+    .row.user { justify-content: flex-end; }
 
     .avatar {
       width: 30px;
@@ -64,7 +62,6 @@
       align-items: center;
       justify-content: center;
       margin-right: 8px;
-      flex-shrink: 0;
     }
 
     .bubble {
@@ -72,7 +69,6 @@
       padding: 10px 14px;
       border-radius: 14px;
       font-size: 14px;
-      line-height: 1.4;
     }
 
     .user .bubble {
@@ -87,12 +83,6 @@
       border-bottom-left-radius: 4px;
     }
 
-    .bubble img {
-      max-width: 160px;
-      border-radius: 10px;
-      display: block;
-    }
-
     .typing {
       font-size: 13px;
       color: #777;
@@ -102,11 +92,9 @@
 
     .input-area {
       display: flex;
-      align-items: center;
       gap: 6px;
       padding: 10px;
       border-top: 1px solid #e0e0e0;
-      background: #fff;
     }
 
     .attach {
@@ -120,13 +108,11 @@
       cursor: pointer;
     }
 
-    .input-area input[type="text"] {
+    input[type="text"] {
       flex: 1;
       padding: 9px 12px;
       border-radius: 18px;
       border: 1px solid #ccc;
-      font-size: 14px;
-      outline: none;
     }
 
     .send {
@@ -156,16 +142,22 @@
 </div>
 
 <script>
-  const API_URL = "https://chatbot-api.onrender.com/api/chat"; // 🔥 CHANGE IF NEEDED
-
+  const API_URL = "https://chatbot-api.onrender.com/api/chat";
   const messages = document.getElementById("messages");
   const input = document.getElementById("input");
   const imageInput = document.getElementById("imageInput");
   const userId = "web-" + Date.now();
-  let typing;
+  let typing = null;
 
   function scrollDown() {
     messages.scrollTop = messages.scrollHeight;
+  }
+
+  function removeTyping() {
+    if (typing) {
+      typing.remove();
+      typing = null;
+    }
   }
 
   function addUserText(text) {
@@ -176,16 +168,8 @@
     scrollDown();
   }
 
-  function addUserImage(src) {
-    const row = document.createElement("div");
-    row.className = "row user";
-    row.innerHTML = `<div class="bubble"><img src="${src}"></div>`;
-    messages.appendChild(row);
-    scrollDown();
-  }
-
   function addBot(text) {
-    if (typing) typing.remove();
+    removeTyping();
     const row = document.createElement("div");
     row.className = "row bot";
     row.innerHTML = `
@@ -197,6 +181,7 @@
   }
 
   function showTyping() {
+    removeTyping();
     typing = document.createElement("div");
     typing.className = "typing";
     typing.textContent = "GoldenBangle is typing...";
@@ -220,9 +205,10 @@
       });
 
       const data = await res.json();
-      setTimeout(() => addBot(data.reply || "No response"), 400);
+      addBot(data.reply || "Thank you for contacting GoldenBangle support.");
+
     } catch {
-      setTimeout(() => addBot("Please try again later."), 400);
+      addBot("Please try again later.");
     }
   }
 
@@ -231,8 +217,12 @@
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = () => addUserImage(reader.result);
+    reader.onload = () => {
+      addUserText(`<img src="${reader.result}" style="max-width:160px">`);
+    };
     reader.readAsDataURL(file);
+
+    showTyping();
 
     try {
       const res = await fetch(API_URL, {
@@ -242,7 +232,8 @@
       });
 
       const data = await res.json();
-      if (data.reply) addBot(data.reply);
+      addBot(data.reply || "Image received.");
+
     } catch {
       addBot("Upload failed.");
     }
