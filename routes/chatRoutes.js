@@ -30,56 +30,59 @@ Do not combine steps in one message.
   `.trim(),
 };
 
-
-
 router.post("/", async (req, res) => {
   try {
     const { message, userId, imageUploaded } = req.body;
 
     if (!userId) {
-      return res.status(400).json({ error: "userId required" });
+      return res.json({ reply: "Please refresh the page and try again." });
     }
 
-    // 🔥 IMAGE UPLOADED → DIRECT FINAL MESSAGE (NO AI)
-   if (imageUploaded) {
-  const complaintId = "GD" + Math.floor(1000 + Math.random() * 9000);
+    // 🖼️ IMAGE UPLOADED → FINAL MESSAGE (NO AI)
+    if (imageUploaded) {
+      const complaintId = "GD" + Math.floor(1000 + Math.random() * 9000);
 
-  const session = sessions.get(userId) || {};
-  const data = session.data || {};
+      return res.json({
+        reply:
+          `Thank you for uploading the product image. ` +
+          `Your complaint has been registered.\n\n` +
+          `You will receive an update within 24 to 48 hours.\n\n` +
+          `Complaint ID: ${complaintId}`
+      });
+    }
 
-  return res.json({
-    reply: `
-Thank you for uploading the product image. Your complaint has been registered.
-You will receive an update within 24 to 48 hours.
-
-Complaint ID: ${complaintId}
-`
-  });
-}
-
-
-    // 🧠 NORMAL CHAT FLOW
     if (!message) {
-      return res.status(400).json({ error: "message required" });
+      return res.json({ reply: "Please type your message." });
     }
 
     let history = sessions.get(userId);
+
+    // 🟢 FIRST MESSAGE → FORCE GREETING FLOW
     if (!history) {
       history = [SYSTEM_PROMPT];
+      sessions.set(userId, history);
     }
 
     history.push({ role: "user", content: message });
 
-    const reply = await getChatResponse(history.slice(-12));
+    const aiReply = await getChatResponse(history.slice(-10));
+
+    // 🔥 EMPTY / FAIL-SAFE REPLY
+    const reply =
+      aiReply && aiReply.trim()
+        ? aiReply
+        : "Hello, welcome to GoldenBangle support.";
 
     history.push({ role: "assistant", content: reply });
     sessions.set(userId, history);
 
     res.json({ reply });
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Chat failed" });
+  } catch {
+    // 🔥 NEVER CRASH FRONTEND
+    res.json({
+      reply: "Sorry, something went wrong. Please try again."
+    });
   }
 });
 
