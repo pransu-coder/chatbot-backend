@@ -3,20 +3,31 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
+
 import chatRoutes from "./routes/chatRoutes.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-/* ✅ ROOT ROUTE (VERY IMPORTANT) */
+/* ✅ PUBLIC FOLDER SERVE */
+app.use(express.static(path.join(__dirname, "public")));
+
+/* ✅ ROOT ROUTE → HTML PAGE */
 app.get("/", (req, res) => {
-  res.send("GoldenBangle Chatbot Backend is running 🚀");
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+/* ✅ CHAT API */
 app.use("/api/chat", chatRoutes);
 
+/* ✅ HEALTH CHECK */
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
